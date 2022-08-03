@@ -4,6 +4,10 @@ import React from "react";
 import NextLink from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import Form from "../components/Form";
+import useSnackbar from "notistack";
+import axios from "axios";
+import jsCookie from "js-cookie"; 
+import { useRouter } from "next/router";
 
 const RegisterScreen = () => {
   const {
@@ -11,7 +15,26 @@ const RegisterScreen = () => {
     control,
     formState: { errors },
   } = useForm();
-  const submitHandler = async ({name, email, password, confirmPassword}) => {};
+  const router = useRouter();
+  const enqueueSnackbar = useSnackbar();
+
+  const submitHandler = async ({ name, email, password, confirmPassword }) => {
+    if (password !== confirmPassword) {
+      enqueueSnackbar("Passwords dont match", { variant: "error" });
+      return;
+    }
+    try {
+      const { data } = await axios.post(`/api/users/register`, {
+        name,
+        email,
+        password,
+      });
+      dispatch({ type: "USER_LOGIN", payload: data });
+      jsCookie.set("userInfo", JSON.stringify(data));
+      router.push("/");
+    } catch (error) {}
+  };
+
   return (
     <div>
       <Form onSubmit={handleSubmit(submitHandler)}>
@@ -143,15 +166,15 @@ const RegisterScreen = () => {
 
           <ListItem>
             <Button variant="contained" type="submit" fullWidth color="primary">
-              Register 
+              Register
             </Button>
           </ListItem>
           <ListItem>
-            Already have an account?{' '}
-            <NextLink href={'/login'} passHref>
-                <Link >
-               <u>  Login  </u>
-                </Link>
+            Already have an account?{" "}
+            <NextLink href={"/login"} passHref>
+              <Link>
+                <u> Login </u>
+              </Link>
             </NextLink>
           </ListItem>
         </List>
